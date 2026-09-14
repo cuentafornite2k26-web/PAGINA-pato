@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Presupuesto | Generador</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <style>
+        :root { --ink: #17324d; --blue: #146c94; --pale: #eaf4f7; --line: #d9e4e8; --orange: #ef8354; }
+        * { box-sizing: border-box; }
+        body { background: #f4f7f8; color: var(--ink); font-family: "Trebuchet MS", sans-serif; margin: 0; }
+        header { background: var(--ink); color: white; padding: 28px max(22px, calc((100% - 1180px) / 2)); }
+        header p { color: #b9d5df; margin: 6px 0 0; }
+        h1 { font-family: Georgia, serif; font-size: clamp(2rem, 4vw, 3.4rem); margin: 0; }
+        main { margin: 28px auto; max-width: 1180px; padding: 0 22px; }
+        .layout { display: grid; gap: 22px; grid-template-columns: 330px 1fr; }
+        .panel, .document, .history { background: white; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 12px 35px #17324d0d; }
+        .panel, .history { padding: 22px; }
+        .panel h2, .history h2 { font-size: 1.1rem; margin: 0 0 18px; }
+        label { display: block; font-size: .8rem; font-weight: bold; margin: 15px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
+        input, textarea { border: 1px solid #c8d8dd; border-radius: 5px; color: var(--ink); font: inherit; padding: 10px; width: 100%; }
+        textarea { min-height: 72px; resize: vertical; }
+        .button-row { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; margin-top: 20px; }
+        button { border: 0; border-radius: 5px; cursor: pointer; font: bold .9rem "Trebuchet MS", sans-serif; padding: 12px 14px; }
+        button:hover { filter: brightness(.94); }
+        .primary { background: var(--blue); color: white; }
+        .secondary { background: #e8f0f2; color: var(--ink); }
+        .danger { background: #f8e7e5; color: #a84039; }
+        .document { padding: clamp(20px, 4vw, 48px); }
+        .doc-head { align-items: flex-start; border-bottom: 2px solid var(--ink); display: flex; gap: 24px; justify-content: space-between; padding-bottom: 24px; }
+        .brand { align-items: center; display: flex; gap: 14px; }
+        .brand-logo { height: 128px; object-fit: contain; width: 230px; }
+        .brand-name { color: var(--ink); font-family: Georgia, serif; font-size: 1.25rem; font-weight: bold; margin: 0; }
+        .brand-tagline { color: #67808a; font-size: .72rem; font-weight: bold; margin: 4px 0 0; }
+        .contact-strip { color: #67808a; display: flex; font-size: .75rem; gap: 14px; margin-top: 12px; }
+        .contact-strip strong { color: var(--ink); }
+        .doc-title { font-family: Georgia, serif; font-size: 2rem; margin: 0 0 6px; white-space: nowrap; }
+        .muted { color: #67808a; font-size: .88rem; }
+        .qr-box { align-items: center; display: flex; flex-direction: column; gap: 5px; margin-top: 10px; text-align: center; }
+        .qr { height: 130px; object-fit: contain; width: 130px; }
+        .qr-label { color: #67808a; font-size: .7rem; font-weight: bold; }
+        .qr-link { color: var(--blue); font-size: .68rem; max-width: 160px; overflow-wrap: anywhere; }
+        .info { padding: 22px 0; }
+        .info strong { display: block; font-size: .76rem; text-transform: uppercase; }
+        table { border-collapse: collapse; margin-top: 8px; width: 100%; }
+        th { background: var(--ink); color: white; font-size: .78rem; padding: 11px 8px; text-align: left; text-transform: uppercase; }
+        td { border-bottom: 1px solid var(--line); padding: 8px; vertical-align: middle; }
+        td input { border-color: transparent; padding: 8px 4px; }
+        .num { text-align: right; width: 110px; }
+        .delete { background: transparent; color: #bd4b45; font-size: 1.1rem; padding: 5px; }
+        .add { background: transparent; color: var(--blue); padding: 12px 0; }
+        .totals { margin-left: auto; margin-top: 20px; max-width: 320px; }
+        .total-line { display: flex; justify-content: space-between; padding: 7px 0; }
+        .grand { border-top: 2px solid var(--ink); font-size: 1.2rem; font-weight: bold; margin-top: 5px; padding-top: 12px; }
+        .doc-note { border-top: 1px solid var(--line); color: #67808a; font-size: .82rem; margin-top: 30px; padding-top: 14px; }
+        .contact-image { border-top: 1px solid var(--line); display: block; margin-top: 24px; max-height: 120px; object-fit: contain; width: 100%; }
+        .history { margin-top: 22px; }
+        .history-empty { color: #67808a; font-size: .9rem; margin: 0; }
+        .history-list { display: grid; gap: 10px; }
+        .history-item { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: 1fr auto; padding: 12px 0; }
+        .history-item:last-child { border-bottom: 0; }
+        .history-data strong, .history-data span { display: block; }
+        .history-data span { color: #67808a; font-size: .82rem; margin-top: 3px; }
+        .history-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+        .history-actions button { font-size: .78rem; padding: 8px 10px; }
+        .pdf-copy { background: white; box-shadow: none; margin: 0; padding: 12mm; width: 190mm; }
+        .pdf-copy .add, .pdf-copy .delete { display: none; }
+        .pdf-copy input { border: 0; padding: 0; }
+        .pdf-copy tr { break-inside: avoid; page-break-inside: avoid; }
+        @media (max-width: 850px) { .layout { grid-template-columns: 1fr; } .panel { order: 2; } }
+        @media (max-width: 600px) { .doc-head { display: block; } .brand-logo { height: 100px; width: 180px; } .doc-title { margin-top: 20px; } .num { width: 80px; } th, td { font-size: .78rem; padding: 5px 3px; } }
+        @media print { body { background: white; } header, .panel, .history, .add, .delete { display: none !important; } main { margin: 0; max-width: none; padding: 0; } .layout { display: block; } .document { border: 0; box-shadow: none; width: 100%; } }
+    </style>
+</head>
+<body>
+    <header><h1>Generador de presupuestos</h1><p>Ordena tus materiales y entrega una propuesta clara a tu cliente.</p></header>
+    <main>
+        <div class="layout">
+            <aside class="panel">
+                <h2>Datos del presupuesto</h2>
+                <label for="client">Cliente</label><input id="client" placeholder="Nombre del cliente">
+                <label for="budgetNo">N.º de presupuesto</label><input id="budgetNo" placeholder="P-001">
+                <label for="date">Fecha</label><input id="date" type="date">
+                <label for="notes">Notas</label><textarea id="notes" placeholder="Condiciones, plazo de entrega..."></textarea>
+                <div class="button-row"><button class="primary" id="saveBtn">Guardar presupuesto</button><button class="secondary" id="pdfBtn">Descargar PDF</button></div>
+                <button class="secondary" id="excelBtn" style="margin-top: 10px; width: 100%;">Descargar Excel</button>
+            </aside>
+            <section class="document" id="document">
+                <div class="doc-head">
+                    <div class="brand"><img class="brand-logo" src="../imagenes/logo%20PBM.jpeg" alt="PBM Estructuras y Construcción"><div><p class="brand-name">PBM</p><p class="brand-tagline">ESTRUCTURAS &amp; CONSTRUCCIÓN</p><div class="contact-strip"><strong>+56 9 9572 0028</strong><span>Instagram: PBM.ESTRUCTURASYCONSTRUCCION</span></div></div></div>
+                    <div><h2 class="doc-title">PRESUPUESTO</h2><div class="muted">N.º <span id="viewBudget">P-001</span><br><span id="viewDate"></span></div><div class="qr-box"><img class="qr" src="https://quickchart.io/qr?size=300&text=https%3A%2F%2Fwww.instagram.com%2Fpbm.estructurasyconstruccion%2F" alt="QR Instagram PBM"><span class="qr-label">ESCANEA PARA VISITAR INSTAGRAM</span><span class="qr-link">instagram.com/pbm.estructurasyconstruccion</span></div></div>
+                </div>
+                <div class="info"><strong>Cliente</strong><span id="viewClient">Cliente</span></div>
+                <table id="materials"><thead><tr><th>Material</th><th>Descripción</th><th class="num">Cantidad</th><th class="num">Precio</th><th class="num">Total</th><th></th></tr></thead><tbody></tbody></table>
+                <button class="add" id="addBtn">+ Añadir material</button>
+                <div class="totals"><div class="total-line"><span>Subtotal</span><strong id="subtotal">$0</strong></div><div class="total-line"><span>IVA (%)</span><input id="tax" class="num" type="number" min="0" value="0"></div><div class="total-line grand"><span>Total</span><strong id="grandTotal">$0</strong></div></div>
+                <div class="doc-note"><strong>Notas:</strong> <span id="viewNotes">Sin notas adicionales.</span></div>
+                <img class="contact-image" src="../imagenes/contacto%20pbm.jpeg" alt="Contacto PBM y código QR de Instagram">
+            </section>
+        </div>
+        <section class="history"><h2>Historial de presupuestos</h2><p class="history-empty" id="historyEmpty">Todavía no hay presupuestos guardados.</p><div class="history-list" id="historyList"></div></section>
+    </main>
+    <script>
+        const HISTORY_KEY = "historialPresupuestos";
+        const money = value => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(Math.round(value || 0));
+        const inputValue = id => document.getElementById(id).value;
+        const updatePreview = () => { document.getElementById("viewClient").textContent = inputValue("client") || "Cliente"; document.getElementById("viewBudget").textContent = inputValue("budgetNo") || "P-001"; document.getElementById("viewDate").textContent = inputValue("date") || new Date().toLocaleDateString("es-CL"); document.getElementById("viewNotes").textContent = inputValue("notes") || "Sin notas adicionales."; };
+        const calculate = () => { let subtotal = 0; document.querySelectorAll("#materials tbody tr").forEach(row => { const total = (Number(row.querySelector(".quantity").value) || 0) * (Number(row.querySelector(".price").value) || 0); row.querySelector(".row-total").textContent = money(total); subtotal += total; }); const tax = Number(inputValue("tax")) || 0; document.getElementById("subtotal").textContent = money(subtotal); document.getElementById("grandTotal").textContent = money(subtotal * (1 + tax / 100)); };
+        const addRow = item => { const data = item || {}; const row = document.createElement("tr"); row.innerHTML = '<td><input class="material" placeholder="Ej. Cemento"></td><td><input class="description" placeholder="Descripción"></td><td><input class="quantity num" type="number" min="0" value="1"></td><td><input class="price num" type="number" min="0" step="1" value="0"></td><td class="row-total num">$0</td><td><button class="delete" title="Eliminar fila">×</button></td>'; row.querySelector(".material").value = data.material || ""; row.querySelector(".description").value = data.description || ""; row.querySelector(".quantity").value = data.quantity ?? 1; row.querySelector(".price").value = data.price ?? 0; row.querySelectorAll("input").forEach(input => input.addEventListener("input", calculate)); row.querySelector(".delete").addEventListener("click", () => { row.remove(); calculate(); }); document.querySelector("#materials tbody").appendChild(row); };
+        const readRows = () => [...document.querySelectorAll("#materials tbody tr")].map(row => ({ material: row.querySelector(".material").value, description: row.querySelector(".description").value, quantity: Number(row.querySelector(".quantity").value) || 0, price: Number(row.querySelector(".price").value) || 0 }));
+        const currentBudget = () => ({ number: inputValue("budgetNo") || "P-001", date: inputValue("date") || new Date().toISOString().slice(0, 10), client: inputValue("client") || "Cliente", notes: inputValue("notes"), tax: Number(inputValue("tax")) || 0, rows: readRows() });
+        const getHistory = () => JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+        const saveCurrent = () => { const budget = currentBudget(); const records = getHistory().filter(item => item.number !== budget.number); records.unshift(budget); localStorage.setItem(HISTORY_KEY, JSON.stringify(records)); renderHistory(); return budget; };
+        const loadBudget = budget => { document.getElementById("budgetNo").value = budget.number; document.getElementById("date").value = budget.date; document.getElementById("client").value = budget.client; document.getElementById("notes").value = budget.notes || ""; document.getElementById("tax").value = budget.tax || 0; document.querySelector("#materials tbody").innerHTML = ""; budget.rows.forEach(addRow); updatePreview(); calculate(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+        const renderHistory = () => { const records = getHistory(); const list = document.getElementById("historyList"); document.getElementById("historyEmpty").hidden = records.length > 0; list.innerHTML = ""; records.forEach((budget, index) => { const item = document.createElement("div"); item.className = "history-item"; item.innerHTML = `<div class="history-data"><strong>Presupuesto ${budget.number}</strong><span>${budget.client} · ${budget.date}</span></div><div class="history-actions"><button class="secondary review">Revisar</button><button class="primary pdf-history">PDF</button><button class="secondary excel-history">Excel</button><button class="danger delete-history">Eliminar</button></div>`; item.querySelector(".review").addEventListener("click", () => loadBudget(budget)); item.querySelector(".pdf-history").addEventListener("click", () => { loadBudget(budget); exportPdf(); }); item.querySelector(".excel-history").addEventListener("click", () => { loadBudget(budget); exportExcel(); }); item.querySelector(".delete-history").addEventListener("click", () => { records.splice(index, 1); localStorage.setItem(HISTORY_KEY, JSON.stringify(records)); renderHistory(); }); list.appendChild(item); }); };
+        const exportPdf = () => { updatePreview(); if (typeof html2pdf !== "function") { window.print(); return; } const copy = document.getElementById("document").cloneNode(true); copy.classList.add("pdf-copy"); copy.querySelectorAll(".add, .delete").forEach(element => element.remove()); document.body.appendChild(copy); try { html2pdf().set({ margin: 0, filename: `presupuesto-${inputValue("budgetNo") || "nuevo"}.pdf`, image: { type: "jpeg", quality: .98 }, html2canvas: { scale: 2, useCORS: true }, pagebreak: { mode: ["css", "legacy"] }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" } }).from(copy).save().then(() => copy.remove()).catch(() => { copy.remove(); window.print(); }); } catch (error) { copy.remove(); window.print(); } };
+        const exportExcel = () => { if (typeof XLSX === "undefined") { alert("No se pudo cargar Excel. Revisa tu conexión a internet."); return; } const budget = currentBudget(); const rows = [["PBM ESTRUCTURAS & CONSTRUCCIÓN", "", "", "", ""], ["Contacto", "+56 9 9572 0028", "Instagram", "PBM.ESTRUCTURASYCONSTRUCCION", ""], ["QR Instagram", "https://www.instagram.com/pbm.estructurasyconstruccion/", "", "", ""], [], ["PRESUPUESTO", budget.number], ["Cliente", budget.client], ["Fecha", budget.date], [], ["Material", "Descripción", "Cantidad", "Precio (CLP)", "Total (CLP)"]]; let subtotal = 0; budget.rows.forEach(item => { const total = item.quantity * item.price; subtotal += total; rows.push([item.material, item.description, item.quantity, item.price, total]); }); const totalRow = rows.length; rows.push([], ["Subtotal", "", "", "", subtotal], ["IVA", `${budget.tax}%`, "", "", subtotal * budget.tax / 100], ["TOTAL", "", "", "", subtotal * (1 + budget.tax / 100)]); const sheet = XLSX.utils.aoa_to_sheet(rows); sheet["!cols"] = [{ wch: 30 }, { wch: 42 }, { wch: 16 }, { wch: 30 }, { wch: 18 }]; const border = { top: { style: "thin", color: { rgb: "D9E4E8" } }, bottom: { style: "thin", color: { rgb: "D9E4E8" } }, left: { style: "thin", color: { rgb: "D9E4E8" } }, right: { style: "thin", color: { rgb: "D9E4E8" } } }; Object.keys(sheet).filter(key => !key.startsWith("!")).forEach(key => { sheet[key].s = { font: { name: "Arial", sz: 10, color: { rgb: "17324D" } }, border }; }); const header = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "146C94" } }, border }; for (let column = 0; column < 5; column += 1) sheet[XLSX.utils.encode_cell({ r: 8, c: column })].s = header; for (let row = 9; row < totalRow; row += 1) for (let column = 2; column < 5; column += 1) { const cell = sheet[XLSX.utils.encode_cell({ r: row, c: column })]; if (cell) cell.z = "#,##0"; } const book = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(book, sheet, "Presupuesto"); XLSX.writeFile(book, `presupuesto-${budget.number}.xlsx`); };
+        document.querySelectorAll("#client, #budgetNo, #date, #notes").forEach(input => input.addEventListener("input", updatePreview));
+        document.getElementById("tax").addEventListener("input", calculate);
+        document.getElementById("addBtn").addEventListener("click", () => addRow());
+        document.getElementById("saveBtn").addEventListener("click", () => { const budget = saveCurrent(); alert(`Presupuesto ${budget.number} guardado.`); });
+        document.getElementById("pdfBtn").addEventListener("click", () => { saveCurrent(); exportPdf(); });
+        document.getElementById("excelBtn").addEventListener("click", () => { saveCurrent(); exportExcel(); });
+        document.getElementById("date").valueAsDate = new Date();
+        addRow();
+        addRow();
+        updatePreview();
+        calculate();
+        renderHistory();
+    </script>
+</body>
+</html>

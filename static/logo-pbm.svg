@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" role="img" aria-labelledby="title desc">
+  <title id="title">PBM Estructuras y Construccion</title>
+  <desc id="desc">Logo PBM</desc>
+  <rect width="600" height="300" fill="white"/>
+  <g fill="none" stroke="#17324d" stroke-width="16" stroke-linejoin="round">
+    <path d="M105 115 L300 35 L495 115 L495 150 L105 150 Z" fill="#17324d"/>
+    <path d="M145 112 L300 55 L455 112" stroke="white" stroke-width="10"/>
+    <path d="M180 150 V95 M420 150 V95"/>
+  </g>
+  <text x="300" y="230" text-anchor="middle" fill="#17324d" font-family="Arial, sans-serif" font-size="92" font-weight="800" letter-spacing="4">PBM</text>
+  <text x="300" y="270" text-anchor="middle" fill="#17324d" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="1">ESTRUCTURAS &amp; CONSTRUCCION</text>
+</svg>
