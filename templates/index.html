@@ -70,7 +70,14 @@
         .pdf-copy tr { break-inside: avoid; page-break-inside: avoid; }
         @media (max-width: 850px) { .layout { grid-template-columns: 1fr; } .panel { order: 2; } }
         @media (max-width: 600px) { .doc-head { display: block; } .brand-logo { height: 100px; width: 180px; } .doc-title { margin-top: 20px; } .num { width: 80px; } th, td { font-size: .78rem; padding: 5px 3px; } }
-        @media print { body { background: white; } header, .panel, .history, .add, .delete { display: none !important; } main { margin: 0; max-width: none; padding: 0; } .layout { display: block; } .document { border: 0; box-shadow: none; width: 100%; } }
+        @media print {
+            button, .no-print { display: none !important; }
+            body { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            header, .panel, .history { display: none !important; }
+            main { margin: 0; max-width: none; padding: 0; }
+            .layout { display: block; }
+            .document { border: 0; box-shadow: none; width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -85,6 +92,7 @@
                 <label for="notes">Notas</label><textarea id="notes" placeholder="Condiciones, plazo de entrega..."></textarea>
                 <div class="button-row"><button class="primary" id="saveBtn">Guardar presupuesto</button><button class="secondary" id="pdfBtn">Descargar PDF</button></div>
                 <button class="secondary" id="excelBtn" style="margin-top: 10px; width: 100%;">Descargar Excel</button>
+                <button onclick="window.print()" class="secondary btn-descargar" style="margin-top: 10px; width: 100%;">Imprimir / Guardar como PDF</button>
             </aside>
             <section class="document" id="document">
                 <div class="doc-head">
